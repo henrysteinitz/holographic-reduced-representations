@@ -16,8 +16,13 @@ class HRR:
 
 
 	@property
+	def square_modulus(self):
+		return self.real ** 2 + self.im ** 2
+
+
+	@property
 	def modulus(self):
-		return torch.sqrt(self.real ** 2 + self.im ** 2)
+		return torch.sqrt(self.square_modulus)
 
 
 	@property
@@ -25,9 +30,14 @@ class HRR:
 		# TODO: Handle zeros.
 		return torch.atan(self.im / self.real)
 
+
 	@property	
 	def conj(self):
 		return HRR(real=self.real, im=-1 * self.im)
+
+	@property
+	def inv(self):
+		return (self.conj / self.square_modulus) 
 
 
 	def bind(self, x):
@@ -45,13 +55,17 @@ class HRR:
 
 
 	def set(self, k, v):
-		return self.store(self.bind(k, v))
+		return self.store(k.bind(v))
 
 
 	def get(self, k):
-		# TODO: Compare conjugate retrieval to inverse
-		# retrieval
-		return k.conj * self
+		return k.inv * self
+
+
+	def get_phase(self, k):
+		# If we're only interested in recovering the phase,
+		# we can use the conjugate instead of the inverse.
+		return (k.conj * self).phase
 
 
 	def __add__(self, x):
@@ -60,5 +74,11 @@ class HRR:
 
 	def __mul__(self, x):
 		return self.bind(x)
+
+
+	def __truediv__(self, x):
+		# Pointwise divide by tensor
+		# TODO: Also support / HRR
+		return HRR(self.real / x, self.im / x)
 	
 	
